@@ -1,0 +1,40 @@
+---
+title: "ScratchPaper"
+format: html
+editor: visual
+---
+
+# Libraries
+```{r}
+library(tidyverse)
+library(jsonlite)
+library(httr)
+```
+
+# API
+
+```{r Census api}
+apiJSON<-GET("https://openlibrary.org/search.json?author=Tolkien&sort=new")
+parsed<- fromJSON(rawToChar(apiJSON$content))
+#colsToKeep(c("author_name","ebook_access",""))
+test<-as_tibble(parsed$docs)|>
+  select(starts_with("author"),
+         starts_with("publish"),
+         "title",
+         "subject",
+         "first_publish_year",
+         "has_fulltext",
+         "isbn")
+
+# test2<-test
+# length
+# !is.atomic(test2[1])
+for (i in 1:length(names(test))) {
+  if(!is.atomic(test[i])){
+    test<-test|>
+      unnest(names(test[i]))
+  }
+}
+
+```
+
