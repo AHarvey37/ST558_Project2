@@ -13,28 +13,47 @@ library(httr)
 
 # API
 
-```{r Census api}
-apiJSON<-GET("https://openlibrary.org/search.json?author=Tolkien&sort=new")
-parsed<- fromJSON(rawToChar(apiJSON$content))
-#colsToKeep(c("author_name","ebook_access",""))
-test<-as_tibble(parsed$docs)|>
-  select(starts_with("author"),
-         starts_with("publish"),
-         "title",
-         "subject",
-         "first_publish_year",
-         "has_fulltext",
-         "isbn")
+```{r Dnd api}
 
-# test2<-test
-# length
-# !is.atomic(test2[1])
-for (i in 1:length(names(test))) {
-  if(!is.atomic(test[i])){
-    test<-test|>
-      unnest(names(test[i]))
+apiJSON<-GET("https://api.open5e.com/v1/spells/?search=fire")
+#test<-parse_json(apiJSON)
+```
+
+``` {r Retrieve spells list}
+#get_spells<- function(apiJSON,...){
+  
+parsed<- fromJSON(rawToChar(apiJSON$content),simplifyVector = TRUE, simplifyDataFrame = TRUE, simplifyMatrix = TRUE)|>
+  map_if(is.data.frame,list)|>
+  map_if(is.null,list)|>
+  as_tibble()|>
+  unnest(results)|>
+  unnest(spell_lists)|>
+  select(everything(),-c(dnd_class,count,'next',previous,slug,document__license_url,document__url))|>
+  rename("class"="spell_lists")|>
+  select(name,class,school,range,everything())
+  
+#return(parsed)
+#}
+
+#get_spells(apiJSON)
+```
+
+```{r search classes}
+apiJSON2<-GET("https://www.dnd5eapi.co/api/classes/monk")
+classes<-fromJSON(rawToChar(apiJSON2$content),simplifyVector = TRUE, simplifyDataFrame = TRUE, simplifyMatrix = TRUE)|>
+  map_if(is.data.frame,list)|>
+  as.tibble()
+for (i in 1:length(classes)) {
+  if(is.list(classes[i])){
+    classes<- classes|>
+      unnest(i,names_sep = "_")
+  }
+  else if (is.null(classes[i])) {
+    classes<- classes|>
+      select(-c(i),everything())
   }
 }
 
+class(classes$proficiency_choices)
 ```
 
