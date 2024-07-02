@@ -14,7 +14,7 @@ library(httr)
 # API
 
 ```{r Dnd api}
-
+key<- get("ghost.r")
 apiJSON<-GET("https://api.open5e.com/v1/spells/?search=fire")
 #test<-parse_json(apiJSON)
 ```
@@ -55,5 +55,24 @@ for (i in 1:length(classes)) {
 }
 
 class(classes$proficiency_choices)
+```
+
+use this... potential
+```{r}
+testapi<-GET("http://api.datausa.io/api/?show=geo&sumlevel=state&required=avg_wage")
+testparse<-fromJSON(rawToChar(testapi$content))|>
+  map_if(is.data.frame,list)|>
+  as_tibble()|>
+  unnest(c(data,source),names_sep = "_")|>
+  unnest(source_annotations,names_sep = "_")
+
+```
+
+```{r make url}
+getAPIdata<- function(drilldown = NULL, measures = NULL, year = NULL){
+  if(is.null(drilldown)){
+    data <- GET("https://datausa.io/api/data?drilldowns=State&measures=Population")
+  }
+}
 ```
 
