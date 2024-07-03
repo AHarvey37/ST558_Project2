@@ -13,13 +13,34 @@ library(httr)
 
 # API
 
-```{r Dnd api}
-key<- source("ghost.r")
+```{r nationalparks key}
+key<- as.character(source("ghost.r")[1])
 ```
 
 
-1. Camp information by national parks by state
-```{r}
+1. retrieve articles by state 
+
+```{r Retrieve Articles}
+# apiART <- GET(paste("https://developer.nps.gov/api/v1/articles?stateCode=NC",
+#           "&api_key=",
+#           key$value,
+#           sep = ""))
+getArticles<-function(url){
+  apiART<-GET(url)
+  art_parsed <- fromJSON(rawToChar(apiART$content),flatten = TRUE)|>
+    as_tibble()
+  art_parsed<-art_parsed$data|>
+    map_if(is.data.frame,list)|>
+    map_if(is.null,list)|>
+    as_tibble()|>
+    unnest(relatedParks,names_sep = "_")|>
+    unnest(tags)|>
+    rename("parkCode"="relatedParks_parkCode")
+}
+```
+
+
+```{r retrieve campgrounds info, eval=FALSE}
 # apiCamp <- GET(paste("https://developer.nps.gov/api/v1/campgrounds?stateCode=WY",
 #           "&api_key=",
 #           key$value,
@@ -56,7 +77,8 @@ getCamp<-function(url){
 
 
 2. search national parks by Alerts
-``` {r Retrieve spells list}
+
+```{r Retrieve Alerts}
 
  # apiJSON<-GET(paste("https://developer.nps.gov/api/v1/alerts?stateCode=NC&api_key=",key$value,sep = ""))
 getAlerts<-function(url){
@@ -77,61 +99,89 @@ getAlerts<-function(url){
 
 get parkIDs
 
-```{r}
-apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?stateCode=NC&api_key=",key$value,sep = ""))
-raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
-data_Parks<- raw_ParkIDs$data|>
-  select(c(fullName,parkCode,description,states,id))
-```
-
-```{r}
+```{r Get Park IDs, eval=FALSE}
+getParks<-function(key = as.character(source("ghost.r")[1])){
+  allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
+               "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
+               "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
+               "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
+               "MP","PR","VI")
+  total<-as_tibble(NULL)
+  for (i in 1:length(allStates)) {
+    apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?stateCode=",allStates[i],"&api_key=",key,sep = ""))
+    raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
+    data_Parks<- raw_ParkIDs$data|>
+      select(c(fullName,parkCode,description,states,id))
+    total<-bind_rows(total,data_Parks)
+  }
+  return(total)
+  }
 ```
 
 
 Join function by park code
 
-```{r}
-name_Parks<- function(state, keyword = "parks"){
+```{r retreive names of parks}
+name_Parks<- function(state, key=as.character(source("ghost.r")[1])){
   apiParks<-GET(
-    paste("https://developer.nps.gov/api/v1/parks?stateCode=",
-          state,
-          "&api_key=",
-          key$value,
-          sep = ""))
-raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
-data_Parks<- raw_ParkIDs$data|>
-  select(c(fullName,parkCode,description,states,id))
-return(data_Parks)
-}
+    paste(
+      "https://developer.nps.gov/api/v1/parks?stateCode=",
+      state,
+      "&api_key=",
+      key,
+      sep = "")
+    )
+  raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
+  data_Parks<- raw_ParkIDs$data|>
+    select(c(fullName,parkCode,description,states,id))
+  return(data_Parks)
+  }
 ```
 
-wrapper
+4. Wrapper function to pull together
 ```{r}
-my_wrapper<- function (keyword , stateCode = "NC", y= NULL,key=source("ghost.r")){
+my_wrapper<- function (keyword , stateCode = "NC", y= NULL,key=as.character(source("ghost.r")[1])){
   newUrl <- paste("https://developer.nps.gov/api/v1/",
                   keyword,
                   "?stateCode=",
                   stateCode,
                   "&api_key=",
-                  key$value,
+                  key,
                   sep = "")
   if(keyword == "alerts"){
     y<-getAlerts(newUrl)
-    
   }
-  else if (keyword=="campgrounds"){
-    y<-getCamp(newUrl)
+  else if (keyword=="articles"){
+    y<-getArticles(newUrl)
+    }
+  x<-getParks(key)
+  cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")
+  return(cleaned)
   }
-   x<-name_Parks(stateCode)
-   cleaned<-right_join(x, y , by = "parkCode",keep = TRUE)
-   return(cleaned)
- }
 ```
 
-```{r}
-name_Parks("NC")
-getCamp(paste("https://developer.nps.gov/api/v1/campgrounds?stateCode=NC&api_key=",key$value,sep = ""))
-test<-my_wrapper("campgrounds",stateCode = "NC")
+```{r testing}
+name_Parks('NC')
+
+test<-my_wrapper("alerts",stateCode = "NC")
 test
 ```
+
+
+FIX HERE
+
+```{r }
+totalNumberOfAlerts<-test|>
+  count(relatedRoadEvents_title,fullName)|>
+  count(fullName,name = "count")
+
+numberOfAlertsByCategory<-test|>
+  count(category,fullName,relatedRoadEvents_title)|>
+  count(category,fullName,name = "count")
+
+test3<-my_wrapper("articles","WY")
+
+```
+
+
 
