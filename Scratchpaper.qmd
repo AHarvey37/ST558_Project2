@@ -18,12 +18,38 @@ key<- as.character(source("ghost.r")[1])
 ```
 
 
+Get ALL parkIDs
+
+```{r Get Park IDs}
+#getParks<-function(key = as.character(source("ghost.r")[1])){
+  allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
+               "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
+               "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
+               "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
+               "MP","PR","VI")
+  total<-as_tibble(NULL)
+  for (i in 1:length(allStates)) {
+    apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?stateCode=",
+                        allStates[i],
+                        "&api_key=",
+                        key,sep = ""))
+    raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
+    data_Parks<- raw_ParkIDs$data|>
+      separate_longer_delim(states, delim = ",")|>
+      select(c(fullName,parkCode,description,states,id,latitude,longitude))
+    total<-bind_rows(total,data_Parks)
+  }
+  
+  # return(total)
+  # }
+```
+
 1. retrieve articles by state 
 
 ```{r Retrieve Articles}
-# apiART <- GET(paste("https://developer.nps.gov/api/v1/articles?stateCode=NC",
+# apiART <- GET(paste("https://developer.nps.gov/api/v1/articles?stateCode=AZ",
 #           "&api_key=",
-#           key$value,
+#           key,
 #           sep = ""))
 getArticles<-function(url){
   apiART<-GET(url)
@@ -97,31 +123,12 @@ getAlerts<-function(url){
 ```
 
 
-get parkIDs
 
-```{r Get Park IDs, eval=FALSE}
-getParks<-function(key = as.character(source("ghost.r")[1])){
-  allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
-               "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
-               "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
-               "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
-               "MP","PR","VI")
-  total<-as_tibble(NULL)
-  for (i in 1:length(allStates)) {
-    apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?stateCode=",allStates[i],"&api_key=",key,sep = ""))
-    raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
-    data_Parks<- raw_ParkIDs$data|>
-      select(c(fullName,parkCode,description,states,id))
-    total<-bind_rows(total,data_Parks)
-  }
-  return(total)
-  }
-```
 
 
 Join function by park code
 
-```{r retreive names of parks}
+```{r retreive names of parks,eval=FALSE}
 name_Parks<- function(state, key=as.character(source("ghost.r")[1])){
   apiParks<-GET(
     paste(
@@ -140,7 +147,8 @@ name_Parks<- function(state, key=as.character(source("ghost.r")[1])){
 
 4. Wrapper function to pull together
 ```{r}
-my_wrapper<- function (keyword , stateCode = "NC", y= NULL,key=as.character(source("ghost.r")[1])){
+my_wrapper<- function (keyword, stateCode = "NC", key=as.character(source("ghost.r")[1]),parkCodes=total){
+  y<- NULL
   newUrl <- paste("https://developer.nps.gov/api/v1/",
                   keyword,
                   "?stateCode=",
@@ -148,40 +156,107 @@ my_wrapper<- function (keyword , stateCode = "NC", y= NULL,key=as.character(sour
                   "&api_key=",
                   key,
                   sep = "")
-  if(keyword == "alerts"){
-    y<-getAlerts(newUrl)
-  }
-  else if (keyword=="articles"){
-    y<-getArticles(newUrl)
-    }
-  x<-getParks(key)
-  cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")
+  ifelse(keyword == "alerts",
+         y<-getAlerts(newUrl),
+         ifelse(keyword=="articles",
+                y<-getArticles(newUrl),
+                stop("Error in keyword, Please choose 'alerts' or 'articles'")
+                )
+         )
+  x<-parkCodes
+  cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
+    filter(states == stateCode)|>
+    distinct(title,.keep_all = TRUE)
   return(cleaned)
   }
 ```
 
-```{r testing}
-name_Parks('NC')
-
-test<-my_wrapper("alerts",stateCode = "NC")
-test
+```{r}
+my_wrapper("alerts","CA")
 ```
 
-
-FIX HERE
+contingency tables
 
 ```{r }
-totalNumberOfAlerts<-test|>
-  count(relatedRoadEvents_title,fullName)|>
+totalNumberOfAlerts<-my_wrapper("alerts","WY")|>
   count(fullName,name = "count")
 
-numberOfAlertsByCategory<-test|>
-  count(category,fullName,relatedRoadEvents_title)|>
-  count(category,fullName,name = "count")
+getNumAlerts<- function(.d){
+  .d<-.d|>
+    count(fullName, name = "count")
+  return(.d)
+}
 
-test3<-my_wrapper("articles","WY")
+x<-getNumAlerts(my_wrapper("alerts","AZ"))
+
+numberOfAlertsByCategory<-test|>
+  count(category,fullName,name="count")
+
+getNumAlertsCat<- function(.d){
+  .d<-.d|>
+    count(category,fullName, name = "count")
+  return(.d)
+}
+
+totalArticlesByPark<-my_wrapper("articles","VA")|>
+  count(fullName,name = "count")
+
+getTotArt<- function(.d){
+  .d<-.d|>
+    count(fullName,name = "count")
+  return(.d)
+}
+
+totalArticlesByTag<-my_wrapper("articles","VA")|>
+  count(fullName,tags,name = "count")
+
+
+getArtTags<- function(.d){
+  .d<-.d|>
+    count(fullName,tags,name = "count")
+  return(.d)
+}
 
 ```
+
+```{r plots}
+
+test4<-getTotArt(my_wrapper("articles","PA"))
+g1<-ggplot(test4,aes(fullName,count, fill = fullName))
+g1 +
+  geom_bar(stat = "identity")+  
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle=45,
+                                   vjust = 1,
+                                   hjust = 1))+
+  labs(title = "Total Aricles by National Park",
+       x = "National Park",
+       y = "Number of Articles")+
+  scale_x_discrete(labels= str_wrap(c(test4$fullName),width = 25))+
+  scale_y_continuous(expand = expansion())
+
+test5<-getArtTags(my_wrapper("articles","PA"))
+g2<-ggplot(test5,aes(tags,count,fill=tags))
+
+g2+
+  geom_bar(stat = "identity")+
+  geom_text(aes(label = count),
+            vjust = 1,
+            size = 2.5)+
+  theme(legend.position = "right",
+        legend.text = element_text(size=6),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())+
+  #guides(color=guide_legend(nrow = 2))+
+  labs(title = "Total Atricles by National Park",
+       x = "Article Tags",
+       y = "Number of Articles")+
+    scale_fill_discrete(labels = str_wrap(c(test5$tags),width = 25))+
+    scale_x_discrete(expand = expansion())+
+    scale_y_continuous(expand = expansion())
+
+```
+
 
 
 
