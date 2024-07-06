@@ -44,6 +44,57 @@ Get ALL parkIDs
   # }
 ```
 
+
+```{r}
+
+totalARTs<-NULL
+
+for (i in 1:length(allStates)) {
+  apiART <- GET(
+    paste("https://developer.nps.gov/api/v1/articles?stateCode=",
+          allStates[i],
+          "&api_key=",
+          key,
+          sep = ""))
+  art_parsed <- fromJSON(
+    rawToChar(apiART$content),
+    flatten = TRUE)|>
+    as_tibble()
+  art_parsed<-art_parsed$data|>
+    map_if(is.data.frame,list)|>
+    map_if(is.null,list)|>
+    as_tibble()|>
+    unnest(relatedParks,names_sep = "_")|>
+    unnest(tags)|>
+    rename("parkCode"="relatedParks_parkCode")
+  totalARTs<-bind_rows(totalARTs,art_parsed)
+  }
+```
+
+```{r}
+totalAlerts<- NULL
+
+for (i in 1:length(allStates)) {
+  apiAlerts<- GET(
+    paste("https://developer.nps.gov/api/v1/alerts?stateCode=",
+          allStates[i],
+          "&api_key=",
+          key,
+          sep = ""))
+  parsedAlerts<- fromJSON(rawToChar(apiAlerts$content),flatten = TRUE)|>
+    as_tibble()
+  parsedAlerts<-parsedAlerts$data|>
+    map_if(is.data.frame,list)|>
+    map_if(is.null,list)|>
+    as_tibble()
+  totalAlerts<- bind_rows(totalAlerts,parsedAlerts)
+  }
+
+totalAlerts<- totalAlerts|>
+  select(-c(relatedRoadEvents))
+```
+
+
 1. retrieve articles by state 
 
 ```{r Retrieve Articles}
@@ -122,7 +173,44 @@ getAlerts<-function(url){
   }
 ```
 
+get all events
+```{r}
 
+# getEvents<-function(url){
+TotalEvents<-NULL
+
+for (i in 1:length(allStates)){
+  getEventsAPI<-GET(
+    paste("https://developer.nps.gov/api/v1/events?stateCode=",
+          allStates[i],
+          "&api_key=",
+          key,
+          sep = ""))
+  parsedEvents<- fromJSON(
+    rawToChar(
+      getEventsAPI$content),
+    flatten = TRUE)
+  parsedEvents<-parsedEvents$data|>
+    as_tibble()
+  TotalEvents<-bind_rows(TotalEvents,parsedEvents)
+}
+TotalEvents<-TotalEvents|>
+  unnest(types,names_sep = "_")|>
+  rename("fullname"="parkfullname",
+         "parkCode"="sitecode")|>
+  select(-c(updateuser:recurrencedateend,
+            isrecurring:portalname,
+            createuser,
+            contactemailaddress:regresurl,
+            images,
+            imageidlist:organizationname,
+            infourl:eventid,
+            feeinfo:recurrencerule,
+            datetimecreated,
+            subjectname,longitude,latitude,tags))|>
+  select(fullname,parkCode,everything())|>
+  unnest_longer(dates,keep_empty = TRUE)
+```
 
 
 
@@ -147,7 +235,12 @@ name_Parks<- function(state, key=as.character(source("ghost.r")[1])){
 
 4. Wrapper function to pull together
 ```{r}
-my_wrapper<- function (keyword, stateCode = "NC", key=as.character(source("ghost.r")[1]),parkCodes=total){
+my_wrapper<- function (keyword, stateCode = "NC",
+                       key=as.character(source("ghost.r")[1]),
+                       parkCodes=total,
+                       Articles=totalARTs,
+                       Alerts = totalAlerts,
+                       Events = TotalEvents){
   y<- NULL
   newUrl <- paste("https://developer.nps.gov/api/v1/",
                   keyword,
@@ -157,13 +250,16 @@ my_wrapper<- function (keyword, stateCode = "NC", key=as.character(source("ghost
                   key,
                   sep = "")
   ifelse(keyword == "alerts",
-         y<-getAlerts(newUrl),
+         y<-Alerts,
          ifelse(keyword=="articles",
-                y<-getArticles(newUrl),
-                stop("Error in keyword, Please choose 'alerts' or 'articles'")
+                y<-Articles,
+                ifelse(keyword=="events",
+                       y<-Events,
+                       stop("Error in keyword, Please choose 'alerts','articles',or 'events'")
+                       )
                 )
          )
-  x<-parkCodes
+         x<-parkCodes
   cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
     filter(states == stateCode)|>
     distinct(title,.keep_all = TRUE)
@@ -172,14 +268,12 @@ my_wrapper<- function (keyword, stateCode = "NC", key=as.character(source("ghost
 ```
 
 ```{r}
-my_wrapper("alerts","CA")
+my_wrapper("events","NY")
 ```
 
 contingency tables
 
 ```{r }
-totalNumberOfAlerts<-my_wrapper("alerts","WY")|>
-  count(fullName,name = "count")
 
 getNumAlerts<- function(.d){
   .d<-.d|>
@@ -187,10 +281,10 @@ getNumAlerts<- function(.d){
   return(.d)
 }
 
-x<-getNumAlerts(my_wrapper("alerts","AZ"))
+totalNumberOfAlerts<-getNumAlerts(my_wrapper("alerts","CA"))
 
-numberOfAlertsByCategory<-test|>
-  count(category,fullName,name="count")
+# numberOfAlertsByCategory<-getc|>
+#   count(category,fullName,name="count")
 
 getNumAlertsCat<- function(.d){
   .d<-.d|>
@@ -198,25 +292,25 @@ getNumAlertsCat<- function(.d){
   return(.d)
 }
 
-totalArticlesByPark<-my_wrapper("articles","VA")|>
-  count(fullName,name = "count")
+test2<-getNumAlertsCat(my_wrapper("alerts","CA"))
+  
+
 
 getTotArt<- function(.d){
   .d<-.d|>
     count(fullName,name = "count")
   return(.d)
 }
-
-totalArticlesByTag<-my_wrapper("articles","VA")|>
-  count(fullName,tags,name = "count")
-
+totalArticlesByPark<-my_wrapper("articles","VA")|>
+  count(fullName,name = "count")
 
 getArtTags<- function(.d){
   .d<-.d|>
     count(fullName,tags,name = "count")
   return(.d)
 }
-
+totalArticlesByTag<-my_wrapper("articles","VA")|>
+  count(fullName,tags,name = "count")
 ```
 
 ```{r plots}
