@@ -11,7 +11,6 @@ library(shiny)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
-  url<-url
   
   
   output$text <- renderText({
@@ -29,6 +28,11 @@ function(input, output, session) {
   output$text2<- renderText({
     print("Query National Park Service API")
   })
+  observeEvent(input$search,
+               {keyword <- input$choices
+               stateCode<- input$state
+               source("utils.r")}
+                      )
   
   output$text3<-renderText({
     print("this should be the final test.")
