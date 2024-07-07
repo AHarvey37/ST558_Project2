@@ -212,6 +212,24 @@ TotalEvents<-TotalEvents|>
   unnest_longer(dates,keep_empty = TRUE)
 ```
 
+```{r}
+getNPSpictures<-GET(
+    paste("https://developer.nps.gov/api/v1/events?stateCode=",
+          "NC",
+          "&api_key=",
+          key,
+          sep = ""))
+parsePICs<-fromJSON(rawToChar(getNPSpictures$content))
+parsePICs<-parsePICs$data|>
+  map_if(is.data.frame,list)|>
+  map_if(is.null,list)|>
+  as_tibble()|>
+  unnest_longer(types)|>
+  unnest_longer(images)
+
+names(parsePICs)
+  unnest_longer(parsPICs,types)
+```
 
 
 Join function by park code
@@ -268,7 +286,7 @@ my_wrapper<- function (keyword, stateCode = "NC",
 ```
 
 ```{r}
-my_wrapper("events","NY")
+my_wrapper("articles","NY")
 ```
 
 contingency tables
