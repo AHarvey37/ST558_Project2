@@ -19,18 +19,15 @@ function(input, output, session) {
         "These three endpoints are 'alerts', 'articles', and 'events'.",
         "The user will be able to select between these three endpoints and type in any two letter state abbrivation. The user will then get a plot and table containing the information which they have just queried.",
         "For more information about the data please visit the National Park Service API at ",
-        "'https://www.nps.gov/subjects/developer/index.htm'")
+        "'https://www.nps.gov/subjects/developer/index.html'")
     })
   
-  output$NPS<- renderText({
-    main<-"www.nps.gov/common/uploads/event_calendar/5A74C854-0180-FA2E-D8F4B432DCF126D8.jpg"
-    c('<img src="',
-      main,
-      '">')
+  output$NPS<- renderUI({
+    tags$img(src="https://nps.gov/wrst/learn/historyculture/images/NPS_16.jpg?maxwidth=300&autorotate=false&quality=78&format=webp")
   })
   
   output$text2<- renderText({
-    print("I hope this works")
+    print("Query National Park Service API")
   })
   
   output$text3<-renderText({

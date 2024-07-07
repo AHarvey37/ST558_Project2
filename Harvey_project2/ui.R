@@ -30,12 +30,21 @@ dashboardPage(
                 #   width = 10, status = "test", solidHeader = TRUE,
                 #   title = "This is a test",
                   textOutput("text"),
-                  htmlOutput("NPS")
+                  uiOutput("NPS")
                   )
                 ),
       tabItem("dataDownload",
               fluidRow(
-                textOutput("text2")
+                textOutput("text2"),
+                radioButtons("choices",
+                             label = "API Keyword:",
+                             choices = c("Articles"="articles",
+                                         "Events"="events")
+                             ),
+                textInput("state",
+                          "Enter 2 character state abbreviation:"),
+                actionButton("search",
+                             "Search")
                 )
               ),
       tabItem("dataExploration",
