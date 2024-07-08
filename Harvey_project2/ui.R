@@ -89,12 +89,17 @@ dashboardPage(
                 #                          #"Table 4"="tab4"
                 #                          )),
                 radioButtons("plotChoice",
-                             "Choose which plot to view:",
+                             "Choose which variables to plot:",
                              choices = c(
-                               "Total number of articles/events by Park"="totbyPark",
-                               "Number of Future Events by park " ="totFuEv",
+                               "Park & Total Articles(or Events)"="totbyPark",
+                               "Event Type & Quantity" ="eventQuant",
                                "Article Tags by park" = "artTa")
                              ),
+                checkboxInput("facet",
+                              "Facet by Park Name",
+                              ),
+                actionButton("build",
+                             "Build"),
                 plotOutput("outTable"),
                 DT::dataTableOutput("table2")))
       )
