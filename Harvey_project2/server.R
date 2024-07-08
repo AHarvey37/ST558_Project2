@@ -30,40 +30,57 @@ function(input, output, session) {
   output$text2<- renderText({
     print("Query National Park Service API")
   })
+  
   setwd("..")
   source("utils.r")
+  
   globalDF<-reactiveValues()
+  
   observeEvent(input$search,
                {keyword <- switch(input$choices,
                                   articles=as.character("articles"),
                                   events=as.character("events"))
-               stateCode<- toupper(input$state)
-               globalDF$a<-my_wrapper(keyword,stateCode)
+               print(length(input$state))
+               for (i in 1:length(input$state)) {
+                 stateCode<-paste(as.character(input$state[i]),sep = ",")
+               }
                
+               
+               globalDF$a<-my_wrapper(keyword,stateCode)
+               #builds contingency table for number of parks
                globalDF$b<-globalDF$a|>
                  count(fullName,name="count")
                  
+               globalDF$c<-names(globalDF$a)
+               
                output$table <- 
                  DT::renderDT(
                    globalDF$a,
                    options=list(scrollX=TRUE))
                   }
                )
-  output$table2<- DT::renderDT(globalDF$b,options=list(scrollX=TRUE))
+  
+  output$text3<-renderText({
+    print("Plots")})
   
   output$outTable<- renderPlot({
-                    ggplot(globalDF$b,
-                           aes(x=fullName,y=count,
-                               fill = fullName))+
-                      geom_bar(stat = "identity")
-                    }
-               )
-  output$text3<-renderText({
-    print("this should be the final test.")
-  
-  
-  
-  })
+    ggplot(globalDF$b,
+           aes(x=fullName,
+               y=count,
+               fill = fullName))+
+      geom_bar(stat = "identity")+
+      theme(legend.position = "none",
+            axis.text.x = element_text(angle=45,
+                                       vjust = 1,
+                                       hjust = 1))+
+      labs(title = paste("Total", input$choices,"by national park"),
+           x = "National Park",
+           y = "Number of Articles")+
+      scale_x_discrete(labels= str_wrap(c(globalDF$b$fullName),width = 25))+
+      scale_y_continuous(expand = expansion())
+                    })
+  output$table2<- DT::renderDT(globalDF$b,options=list(scrollX=TRUE))
+
   
     # output$distPlot <- renderPlot({
     # 

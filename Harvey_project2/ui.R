@@ -23,6 +23,13 @@ dashboardPage(
                tabName = "dataExploration")
     )),
   dashboardBody(
+    tags$head(
+      tags$style(HTML("
+    .multicol{
+      -webkit-column-count:5;
+      -moz-column-count:5;
+      column-count:5;}"
+    ))),
     tabItems(
       tabItem("about",
               fluidRow(
@@ -41,8 +48,33 @@ dashboardPage(
                              choices = c("Articles"="articles",
                                          "Events"="events")
                              ),
-                textInput("state",
-                          "Enter 2 character state abbreviation:"),
+                tags$div(class="multicol",
+                checkboxGroupInput("state",
+                                   "Select State(s) to search:",
+                                   choices = c(
+                                     "Alabama"="AL","Alaska"="AK","Arizona"="AZ",
+                                     "Arkansas"="AR","California"="CA","Colorado"="CO",
+                                     "Connecticut"="CT","Delaware"="DE","Florida"="FL",
+                                     "Georgia"="GA","Hawaii"="HI","Idaho"="ID",
+                                     "Illinois"="IL","Indiana"="IN","Iowa"="IA",
+                                     "Kansas"="KS","Kentucky"="KY","Louisiana"="LA",
+                                     "Maine"="ME","Maryland"="MD","Massachusetts"="MA",
+                                     "Michigan"="MI","Minnesota"="MN","Mississippi"="MS",
+                                     "Missouri"="MO","Montana"="MT","Nebraska"="NE",
+                                     "Nevada"="NV","New Hampshire"="NH","New Jersey"="NJ",
+                                     "New Mexico"="NM","New York"="NY","North Carolina"="NC",
+                                     "North Dakota"="ND","Ohio"="OH","Oklahoma"="OK",
+                                     "Oregon"="OR","Pennsylvania"="PA","Rhode Island"="RI",
+                                     "South Carolina"="SC","South Dakota"="SD","Tennessee"="TN",
+                                     "Texas"="TX","Utah"="UT","Vermont"="VT",
+                                     "Virginia"="VA","Washington"="WA","West Virginia"="WV",
+                                     "Wisconsin"="WI","Wyoming"="WY","Distict of Columbia"="DC",
+                                     "Guam"="GU","Northern Mariana Islands"="MP","Puerto Rico"="PR",
+                                     "U.S. Virgin Islands"="VI"),
+                                   width = 450
+                )),
+                # textInput("state",
+                #           "Enter 2 character state abbreviation:"),
                 actionButton("search",
                              "Search"),
                 DT::dataTableOutput("table")
