@@ -73,8 +73,6 @@ dashboardPage(
                                      "U.S. Virgin Islands"="VI"),
                                    width = 450
                 )),
-                # textInput("state",
-                #           "Enter 2 character state abbreviation:"),
                 actionButton("search",
                              "Search"),
                 DT::dataTableOutput("table")
@@ -90,6 +88,13 @@ dashboardPage(
                 #                          #"Table 3"="tab3",
                 #                          #"Table 4"="tab4"
                 #                          )),
+                radioButtons("plotChoice",
+                             "Choose which plot to view:",
+                             choices = c(
+                               "Total number of articles/events by Park"="totbyPark",
+                               "Number of Future Events by park " ="totFuEv",
+                               "Article Tags by park" = "artTa")
+                             ),
                 plotOutput("outTable"),
                 DT::dataTableOutput("table2")))
       )

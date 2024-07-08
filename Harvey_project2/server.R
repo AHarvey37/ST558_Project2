@@ -75,7 +75,7 @@ function(input, output, session) {
                                        hjust = 1))+
       labs(title = paste("Total", input$choices,"by national park"),
            x = "National Park",
-           y = "Number of Articles")+
+           y = paste("Number of", input$choices))+
       scale_x_discrete(labels= str_wrap(c(globalDF$b$fullName),width = 25))+
       scale_y_continuous(expand = expansion())
                     })
