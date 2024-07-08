@@ -8,6 +8,8 @@
 #
 
 library(shiny)
+library(ggplot2)
+library(tidyverse)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
@@ -30,22 +32,37 @@ function(input, output, session) {
   })
   setwd("..")
   source("utils.r")
+  globalDF<-reactiveValues()
   observeEvent(input$search,
                {keyword <- switch(input$choices,
                                   articles=as.character("articles"),
                                   events=as.character("events"))
                stateCode<- input$state
-               output$table<- DT::renderDT(
-                 my_wrapper(
-                   keyword,
-                   stateCode),
-                 options=list(scrollX=TRUE)
+               globalDF$a<-my_wrapper(keyword,stateCode)
+               output$table <- 
+                 DT::renderDT(
+                   globalDF$a,
+                   options=list(scrollX=TRUE))
+                   
+                  globalDF$b<-globalDF$a|>
+                     count(fullName,name = "count")
+                  
+                  output$table3<-DT::renderDT(
+                    df_cont,
+                    options=list(scrollX=TRUE))
+                  }
                )
-               }
+  output$table2<- DT::renderDT(globalDF$b,options=list(scrollX=TRUE))
+  output$outTable<- renderPlot({
+                    ggplot(globalDF$b,aes(aes(fullName,count, fill = fullName)))+
+                      geom_bar(stat = "identity")
+                    }
                )
-  
   output$text3<-renderText({
     print("this should be the final test.")
+  
+  
+  
   })
   
     # output$distPlot <- renderPlot({

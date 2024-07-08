@@ -50,7 +50,16 @@ dashboardPage(
               ),
       tabItem("dataExploration",
               fluidRow(
-                textOutput("text3")))
+                textOutput("text3"),
+                # radioButtons("tabChoice",
+                #              "Tables to choose:",
+                #              choices = c("Table 1"="tab1"#,
+                #                          #"Table 2"="tab2",
+                #                          #"Table 3"="tab3",
+                #                          #"Table 4"="tab4"
+                #                          )),
+                plotOutput("outTable"),
+                DT::dataTableOutput("table2")))
       )
     )
   )
