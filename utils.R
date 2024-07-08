@@ -6,23 +6,23 @@ library(jsonlite)
 #---------------------------------------------------------------------
 key<-source("ghost.r")[1]
 #---------------------------------------------------------------------
-allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
-             "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
-             "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
-             "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
-             "MP","PR","VI")
+# allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
+#              "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
+#              "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
+#              "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
+#              "MP","PR","VI")
 total<-as_tibble(NULL)
-for (i in 1:length(allStates)) {
-  apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?stateCode=",
-                      allStates[i],
+  apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?limit=1000",
                       "&api_key=",
-                      key,sep = ""))
+                      key,
+                      sep = ""))
   raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
   data_Parks<- raw_ParkIDs$data|>
     separate_longer_delim(states, delim = ",")|>
     select(c(fullName,parkCode,description,states,id,latitude,longitude))
-  total<-bind_rows(total,data_Parks)
-}
+  total<-data_Parks
+
+
 
 #---------------------------------------------------------------------
 # Retrieve articles

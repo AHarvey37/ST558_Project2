@@ -37,24 +37,24 @@ function(input, output, session) {
                {keyword <- switch(input$choices,
                                   articles=as.character("articles"),
                                   events=as.character("events"))
-               stateCode<- input$state
+               stateCode<- toupper(input$state)
                globalDF$a<-my_wrapper(keyword,stateCode)
+               
+               globalDF$b<-globalDF$a|>
+                 count(fullName,name="count")
+                 
                output$table <- 
                  DT::renderDT(
                    globalDF$a,
                    options=list(scrollX=TRUE))
-                   
-                  globalDF$b<-globalDF$a|>
-                     count(fullName,name = "count")
-                  
-                  output$table3<-DT::renderDT(
-                    df_cont,
-                    options=list(scrollX=TRUE))
                   }
                )
   output$table2<- DT::renderDT(globalDF$b,options=list(scrollX=TRUE))
+  
   output$outTable<- renderPlot({
-                    ggplot(globalDF$b,aes(aes(fullName,count, fill = fullName)))+
+                    ggplot(globalDF$b,
+                           aes(x=fullName,y=count,
+                               fill = fullName))+
                       geom_bar(stat = "identity")
                     }
                )
