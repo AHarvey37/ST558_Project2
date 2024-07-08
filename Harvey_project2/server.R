@@ -28,11 +28,21 @@ function(input, output, session) {
   output$text2<- renderText({
     print("Query National Park Service API")
   })
+  setwd("..")
+  source("utils.r")
   observeEvent(input$search,
-               {keyword <- input$choices
+               {keyword <- switch(input$choices,
+                                  articles=as.character("articles"),
+                                  events=as.character("events"))
                stateCode<- input$state
-               source("utils.r")}
-                      )
+               output$table<- DT::renderDT(
+                 my_wrapper(
+                   keyword,
+                   stateCode),
+                 options=list(scrollX=TRUE)
+               )
+               }
+               )
   
   output$text3<-renderText({
     print("this should be the final test.")

@@ -1,4 +1,10 @@
+library(tidyverse)
+library(httr)
+library(jsonlite)
 
+
+#---------------------------------------------------------------------
+key<-source("ghost.r")[1]
 #---------------------------------------------------------------------
 allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
              "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
@@ -20,8 +26,8 @@ for (i in 1:length(allStates)) {
 
 #---------------------------------------------------------------------
 # Retrieve articles
-getArticles<-function(stateCode = "NC"){
-  apiART<-GET(newUrl)
+getArticles<-function(Url){
+  apiART<-GET(Url)
   art_parsed <- fromJSON(rawToChar(apiART$content),flatten = TRUE)|>
     as_tibble()
   art_parsed<-art_parsed$data|>
@@ -36,20 +42,20 @@ getArticles<-function(stateCode = "NC"){
 
 #---------------------------------------------------------------------
 #Events Function
-getEvents<-function(newUrl){
-  TotalEvents<-NULL
-  for (i in 1:length(allStates)){
-    getEventsAPI<-GET(newurl)
+getEvents<-function(Url){
+  #TotalEvents<-NULL
+  #for (i in 1:length(allStates)){
+    getEventsAPI<-GET(Url)
     parsedEvents<- fromJSON(
       rawToChar(
         getEventsAPI$content),
       flatten = TRUE)
     parsedEvents<-parsedEvents$data|>
       as_tibble()
-    TotalEvents<-bind_rows(TotalEvents,parsedEvents)
-    }
-  TotalEvents<-TotalEvents|>
-    unnest(types,names_sep = "_")|>
+    #TotalEvents<-bind_rows(TotalEvents,parsedEvents)
+    
+    parsedEvents<-parsedEvents|>
+    unnest(types, names_sep = "_")|>
     rename("fullname"="parkfullname",
            "parkCode"="sitecode")|>
     select(-c(updateuser:recurrencedateend,
@@ -64,7 +70,7 @@ getEvents<-function(newUrl){
               subjectname,longitude,latitude,tags))|>
     select(fullname,parkCode,everything())|>
     unnest_longer(dates,keep_empty = TRUE)
-  return(TotalEvents)
+  return(parsedEvents)
 }
 #---------------------------------------------------------------------
 
@@ -83,9 +89,9 @@ my_wrapper<- function (keyword, stateCode = "NC",
                   key,
                   sep = "")
   ifelse(keyword=="articles",
-         y<-Articles,
+         y<-getArticles(newUrl),
          ifelse(keyword=="events",
-                y<-Events,
+                y<-getEvents(newUrl),
                 stop("Error in keyword, Please choose 'alerts','articles',or 'events'")
                 )
          )

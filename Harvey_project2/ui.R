@@ -44,7 +44,8 @@ dashboardPage(
                 textInput("state",
                           "Enter 2 character state abbreviation:"),
                 actionButton("search",
-                             "Search")
+                             "Search"),
+                DT::dataTableOutput("table")
                 )
               ),
       tabItem("dataExploration",
