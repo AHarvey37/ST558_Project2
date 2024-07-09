@@ -133,8 +133,9 @@ dashboardPage(
                              choices = c(
                                "Park & Total Articles(or Events)"="totbyPark",
                                "Event Type & Quantity" ="eventQuant",
-                               "Density of Parks by Designation (All Parks)" = "dens",
-                               "Density of Tags by Events/Article"="tagDens")
+                               "Density of Tags by Events/Article"="tagDens",
+                               "Density of Parks by Designation (All Parks)" = "dens"
+                               )
                              ),
                 # Create binary checkbox to turn on and off facetting
                 checkboxInput("facet",

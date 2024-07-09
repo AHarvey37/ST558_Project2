@@ -216,7 +216,7 @@ function(input, output, session) {
                                 })
                               # Closes else statement
                             }
-                            # Third Radio button
+                            # Fourth Radio button
                           },dens={
                             # If statement based on value of facet checkbox
                             if(input$facet==FALSE){
@@ -234,12 +234,12 @@ function(input, output, session) {
                                                                    vjust = 1,
                                                                    hjust = 1))+
                                   # Create Title, and labels for x axis and y axis
-                                  labs(title = paste("States by Desigination density greater than 5"),
+                                  labs(title = paste("States by Desigination Density Greater than 5"),
                                        x = "States",
                                        y = "Designations")
                                 # Closes renderPlot
                                 })
-                            # Closes else statement
+                            # Closes if statement
                             }
                             else{
                               # Renders plot to be displayed
@@ -250,12 +250,24 @@ function(input, output, session) {
                                          y=designation,
                                          size=count))+
                                   # Creates a Bubble plot based on size
-                                geom_point()+
+                                  geom_point()+
                                   # Applies Faceting
-                                facet_wrap(vars(states))
-                            })
-                            }
+                                  facet_wrap(vars(states))+
+                                  # Layers added for legibility
+                                  theme(axis.text.x = element_text(angle=45,
+                                                                   vjust = 1,
+                                                                   hjust = 1))+
+                                  # Create Title, and labels for x axis and y axis
+                                  labs(title = paste("States by Desigination Density Greater than 5"),
+                                       x = "States",
+                                       y = "Designations")
+                                # Closes renderPlot
+                                })
+                              # Closes else statement
+                              }
+                            # Third Radio Button
                           },tagDens={
+                            # If statement based on value of facet checkbox
                             if(input$facet==FALSE){
                               # Renders plot to be displayed
                               output$outTable<- renderPlot({
@@ -263,47 +275,65 @@ function(input, output, session) {
                                 ggplot(globalDF$Cloud,
                                      aes(label=tags,size = count,color=count))+
                                   # Creates a WORD CLOUD plot based on number of tags
-                                ggwordcloud::geom_text_wordcloud()+
-                                scale_color_gradient(low = 'blue', high = 'red')+
-                                scale_size_area(max_size = 10)
-                            })
-                            }
+                                  ggwordcloud::geom_text_wordcloud()+
+                                  # Sets the colors for low and high values of "count"
+                                  scale_color_gradient(low = 'blue', high = 'red')+
+                                  # Sets the max scale of the cloud
+                                  scale_size_area(max_size = 100)+
+                                  # Create Title, and labels for x axis and y axis
+                                  labs(title = paste("Most frequent tag in",input$choices,"in Park"))
+                                # Closes renderPlot
+                                })
+                              # Closes if statement
+                              }
                             else{
                               # Renders plot to be displayed
                               output$outTable<-renderPlot({
                                 # Uses ggplot and a contingency table to build object
                                 ggplot(globalDF$Cloud,
-                                     aes(label=tags,size = count,color=count))+
+                                       aes(label=tags,size = count,color=count))+
                                   # Creates a WORD CLOUD plot based on nubmer of tags
-                                ggwordcloud::geom_text_wordcloud()+
-                                scale_color_gradient(low = 'blue', high = 'red')+
-                                scale_size_area(max_size = 10)+
-                                  # Applies Faceting
-                                facet_wrap(vars(fullName))
-                            })
+                                  ggwordcloud::geom_text_wordcloud()+
+                                  # Sets the colors for low and high values of "count"
+                                  scale_color_gradient(low = 'blue', high = 'red')+
+                                  # Sets the max scale of the cloud
+                                  scale_size_area(max_size = 10)+
+                                  # Applies Faceting by park name
+                                  facet_wrap(vars(fullName))
+                                # Closes renderPlot
+                                })
+                              # Closes else statement
                             }
+                            # Close case in switch statment
                           }
+                        #Closes switch statement
                  )
-                 }
-                )
+                 # Close observeEvent
+                 })
 
-  observeEvent(input$build,{
-    output$text3<-renderText({print("Build Plots")})
-    # if(input$facet==TRUE){
-    #   output$text3<-renderText({print("this works somehow")})
-    # }
-  })
-  
+  # Renders text for input variable "text3"
+  output$text3<-renderText({
+    # Prints Build Plots
+    print("Build Plots")
+    # Close renderText
+    })
+    
+  # Observe when radio buttons on tab 3 are changed using a switch statement,
+  # Changes what contingency table is displayed
   observe(output$table2<-switch(input$plotChoice,
+                                # When radio button 1 is clicked, display contingency table
                                 totbyPark={
                                   DT::renderDT(globalDF$TotParks,options=list(scrollX=TRUE))
                                   },
+                                # When radio button 2 is clicked, display contingency table
                                 eventQuant={
                                   DT::renderDT(globalDF$Events,options=list(scrollX=TRUE))
                                   },
+                                # When radio button 4 is clicked, display contingency table
                                 dens={
                                   DT::renderDT(globalDF$stateParks,options=list(scrollX=TRUE))
                                 },
+                                # When radio button 3 is clicked, display contingency table
                                 tagDens={
                                   DT::renderDT(globalDF$Cloud,options=list(scrollX=TRUE))
                                 }
