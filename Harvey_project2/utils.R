@@ -4,14 +4,14 @@ library(jsonlite)
 
 
 #---------------------------------------------------------------------
-key<-source("ghost")[1]
+key<-source("ghost.R")[1]
 #---------------------------------------------------------------------
 # allStates<-c("AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL",
 #              "IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT",
 #              "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
 #              "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
 #              "MP","PR","VI")
-getAllParks<-function(key=source("ghost")[1]){
+getAllParks<-function(key=source("ghost.R")[1]){
   total<-as_tibble(NULL)
   apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?limit=1000",
                       "&api_key=",
@@ -79,7 +79,7 @@ getEvents<-function(Url){
 
 #Wrapper function to return cleaned data
 my_wrapper<- function (keyword, stateCode = "NC",
-                       key=as.character(source("ghost")[1])){
+                       key=as.character(source("ghost.R")[1])){
   y<- NULL
   newUrl <- paste("https://developer.nps.gov/api/v1/",
                   keyword,
