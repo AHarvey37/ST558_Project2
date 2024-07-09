@@ -32,8 +32,8 @@ function(input, output, session) {
     print("Loading API Query")
   })
   
-#  setwd("..")
-  source("./utils.r")
+  setwd("..")
+  source("utils.r")
   
   globalDF<-reactiveValues()
   
