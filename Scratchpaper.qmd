@@ -146,11 +146,12 @@ ggplot(testTag,aes(x=types,y=count))+
 
 
 test8<-my_wrapper("sad")|>
+  mutate(designation=na_if(designation,""))|>
   count(states,designation,name = "count")|>
-  mutate(designation=na_if(designation,""))
+  filter(count>5)
+  
 
 unique(test8$designation)
-ggplot(test8,aes(x=designation,y=count))+geom_boxplot()+
-  facet_wrap(vars(states))
+ggplot(test8,aes(x=states,y=designation,size=count))+geom_point()+facet_wrap(vars(states))
 ```
 

@@ -64,8 +64,9 @@ function(input, output, session) {
                else if(input$choices=="allParks"){
                  globalDF$a<-globalDF$b
                  globalDF$stateParks<-globalDF$b|>
-                   count(designation,name = "count")|>
-                   mutate(designation=na_if(designation,""))
+                   mutate(designation=na_if(designation,""))|>
+                   count(states,designation,name = "count")|>
+                   filter(count>5)
                }
                
                output$table <- 
@@ -149,8 +150,12 @@ function(input, output, session) {
                                      x = "Dates",
                                      y = paste("Number of", input$choices))
                             })}
-                          },allParks={
-                              if(input$facet==FALSE){
+                          },dens={
+                              if(input$facet==FALSE){output$outTable<- renderPlot({
+                                ggplot(globalDF$stateParks
+                                       ,aes(x=states,y=designation,size=count))+
+                                  geom_point()
+                              })
                                 
                               }
                             }
@@ -208,7 +213,10 @@ function(input, output, session) {
                                   },
                                 eventQuant={
                                   DT::renderDT(globalDF$Events,options=list(scrollX=TRUE))
-                                  }
+                                  },
+                                dens={
+                                  DT::renderDT(globalDF$stateParks,options=list(scrollX=TRUE))
+                                }
                                 )
           )
     # output$distPlot <- renderPlot({

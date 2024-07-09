@@ -94,7 +94,7 @@ dashboardPage(
                              choices = c(
                                "Park & Total Articles(or Events)"="totbyPark",
                                "Event Type & Quantity" ="eventQuant",
-                               "Article Tags by park" = "artTa")
+                               "Density of Parks by Designation" = "dens")
                              ),
                 checkboxInput("facet",
                               "Facet",
