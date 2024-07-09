@@ -60,8 +60,10 @@ function(input, output, session) {
                }
                # All contingency tables are built here. While it increases loading time it also allows all radio buttons to be used in the next tab
                # Builds contingency table for word cloud
-               globalDF$Cloud<-globalDF$a|>
+              if(input$choices=="articles"){
+                globalDF$Cloud<-globalDF$a|>
                  count(fullName,tags,name = "count")
+                }
                # builds contingency table for state parks
                globalDF$stateParks<-globalDF$b|>
                  count(states,designation,name = "count")|>
