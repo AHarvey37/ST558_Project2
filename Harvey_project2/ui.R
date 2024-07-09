@@ -96,7 +96,8 @@ dashboardPage(
                                "Article Tags by park" = "artTa")
                              ),
                 checkboxInput("facet",
-                              "Facet by Park Name",
+                              "Facet",
+                              FALSE
                               ),
                 actionButton("build",
                              "Build"),

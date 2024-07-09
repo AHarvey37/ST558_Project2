@@ -45,10 +45,18 @@ function(input, output, session) {
                  stateCode<-paste(as.character(input$state[i]))
                  globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
                }
-               
+               if(input$choices=="events"){
+                 #build contingency table for events
+                 globalDF$Events<-globalDF$a|>
+                   mutate(isfree=as.factor(isfree))|>
+                   count(fullName,types,isfree,name = "count")}
+               else{
                #builds contingency table for number of parks
-               # globalDF$b<-globalDF$a|>
-               #   count(fullName,name="count")
+               globalDF$TotParks<-globalDF$a|>
+                 count(fullName,states,name="count")}
+               
+               
+               
                output$table <- 
                  DT::renderDT(
                    globalDF$a,
@@ -59,73 +67,135 @@ function(input, output, session) {
   output$text3<-renderText({
     print("Plots")})
   
+  
+  
   observeEvent(input$build,
-               {if(input$plotChoice == "totbyPark"){
-                 globalDF$b<-globalDF$a|>
-                   count(fullName,name="count")
-                 output$outTable<- renderPlot({
-                   ggplot(globalDF$b,
-                          aes(x=fullName,
-                              y=count,
-                              fill = fullName))+
-                     geom_bar(stat = "identity")+
-                     theme(legend.position = "none",
-                           axis.text.x = element_text(angle=45,
-                                                      vjust = 1,
-                                                      hjust = 1))+
-                     labs(title = paste("Total", input$choices,"by national park"),
-                          x = "National Park",
-                          y = paste("Number of", input$choices))+
-                     scale_x_discrete(labels= str_wrap(c(globalDF$b$fullName),width = 25))+
-                     scale_y_continuous(expand = expansion())
-                 })
-               }
-                 else if(input$plotChoice=="eventQuant"){
-                   if(input$choices=="events"){
-                     globalDF$b<-globalDF$a|>
-                       mutate(isfree=as.factor(isfree))|>
-                       count(fullName,types,isfree,name = "count")
-                     output$outTable<- renderPlot({
-                       ggplot(globalDF$b,
-                              aes(x=types,y=count))+
-                         geom_point(aes(color=isfree))+
-                         theme(axis.text.x = element_text(angle=45,
-                                                          vjust = 1,
-                                                          hjust = 1))+
-                         labs(title = paste("Total", input$choices,"by national park"),
-                              x = "Dates",
-                              y = paste("Number of", input$choices))
+               {
+                 switch(input$plotChoice,
+                        totbyPark={
+                          if(input$facet==FALSE){
+                   output$outTable<- renderPlot({
+                     ggplot(globalDF$TotParks,
+                            aes(x=fullName,
+                                y=count,
+                                fill = fullName))+
+                       geom_bar(stat = "identity")+
+                       theme(legend.position = "none",
+                             axis.text.x = element_text(angle=45,
+                                                        vjust = 1,
+                                                        hjust = 1))+
+                       labs(title = paste("Total", input$choices,"by national park"),
+                            x = "National Park",
+                            y = paste("Number of", input$choices))+
+                       scale_x_discrete(labels= str_wrap(c(globalDF$TotParks$fullName),width =
+                                                           25))+
+                       scale_y_continuous(expand = expansion())
                    })
                    }
-                   else if(input$choices=="events" & input$facet==TRUE){
-                     globalDF$b<-globalDF$a|>
-                       mutate(isfree=as.factor(isfree))|>
-                       count(fullName,types,isfree,name = "count")
-                     output$outTable<- renderPlot({
-                       ggplot(globalDF$b,
-                              aes(x=types,y=count))+
-                         geom_point(aes(color=isfree))+
-                         facet_wrap(vars(fullName))+
-                         theme(axis.text.x = element_text(angle=45,
-                                                          vjust = 1,
-                                                          hjust = 1))+
-                         labs(title = paste("Total", input$choices,"by national park"),
-                              x = "Dates",
-                              y = paste("Number of", input$choices))
+                          else {
+                   output$outTable<- renderPlot({
+                     ggplot(globalDF$TotParks,
+                            aes(x=fullName,
+                                y=count,
+                                fill = fullName))+
+                       geom_bar(stat = "identity")+
+                       facet_wrap(vars(states))+
+                       theme(legend.position = "none",
+                             axis.text.x = element_text(angle=45,
+                                                        vjust = 1,
+                                                        hjust = 1))+
+                       labs(title = paste("Total", input$choices,"by national park"),
+                            x = "National Park",
+                            y = paste("Number of", input$choices))+
+                       scale_x_discrete(labels= str_wrap(c(globalDF$TotParks$fullName),width =
+                                                           25))+
+                       scale_y_continuous(expand = expansion())
+                       
                      })
-                   }
-                   else{
-                     output$text3<-renderText({
-                     print("Must select 'events' in data exploration tab")
-                     })
-                   }
                  }
-              })
+                          },eventQuant={
+                            if(input$facet==FALSE){output$outTable<- renderPlot({
+                              ggplot(globalDF$Events,
+                                     aes(x=types,y=count))+
+                                geom_point(aes(color=isfree))+
+                                theme(axis.text.x = element_text(angle=45,
+                                                                 vjust = 1,
+                                                                 hjust = 1))+
+                                labs(title = paste("Total", input$choices,"by national park"),
+                                     x = "Dates",
+                                     y = paste("Number of", input$choices))
+                            })}
+                            else{output$outTable<- renderPlot({
+                              ggplot(globalDF$Events,
+                                     aes(x=types,
+                                         y=count))+
+                                geom_point(aes(color=isfree))+
+                                facet_wrap(vars(fullName))+
+                                theme(axis.text.x = element_text(angle=45,
+                                                                 vjust = 1,
+                                                                 hjust = 1))+
+                                labs(title = paste("Total", input$choices,"by national park"),
+                                     x = "Dates",
+                                     y = paste("Number of", input$choices))
+                            })}
+                   }
+                 )
+                 }
+                )
+  # {
+  #                
+  #                }
+  #                else if(input$plotChoice=="eventQuant"&&input$choices=="events"){
+  #                    if(input$facet==FALSE){
+  #                      output$outTable<- renderPlot({
+  #                      ggplot(globalDF$Events,
+  #                                             aes(x=types,y=count))+
+  #                        geom_point(aes(color=isfree))+
+  #                        theme(axis.text.x = element_text(angle=45,
+  #                                                         vjust = 1,
+  #                                                         hjust = 1))+
+  #                        labs(title = paste("Total", input$choices,"by national park"),
+  #                             x = "Dates",
+  #                             y = paste("Number of", input$choices))
+  #                      })
+  #                      }
+  #                    else {
+  #                      output$outTable<- renderPlot({
+  #                        ggplot(globalDF$Events,
+  #                               aes(x=types,
+  #                                   y=count))+
+  #                          geom_point(aes(color=isfree))+
+  #                          facet_wrap(vars(fullName))+
+  #                          theme(axis.text.x = element_text(angle=45,
+  #                                                           vjust = 1,
+  #                                                           hjust = 1))+
+  #                          labs(title = paste("Total", input$choices,"by national park"),
+  #                               x = "Dates",
+  #                               y = paste("Number of", input$choices))
+  #                      })
+  #                    }
+  #                  } 
+  #                else{output$text3<-renderText({
+  #                  print("Must select 'events' in data exploration tab")
+  #                })
+  #                }
+  #                })
   
+  observeEvent(input$build,{
+    if(input$facet==TRUE){
+      output$text3<-renderText({print("this works somehow")})
+    }
+  })
   
-  output$table2<- DT::renderDT(globalDF$b,options=list(scrollX=TRUE))
-
-  
+  observe(output$table2<-switch(input$plotChoice,
+                                totbyPark={
+                                  DT::renderDT(globalDF$TotParks,options=list(scrollX=TRUE))
+                                  },
+                                eventQuant={
+                                  DT::renderDT(globalDF$Events,options=list(scrollX=TRUE))
+                                  }
+                                )
+          )
     # output$distPlot <- renderPlot({
     # 
     #     # generate bins based on input$bins from ui.R
