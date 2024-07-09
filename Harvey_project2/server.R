@@ -6,7 +6,9 @@
 #
 #    https://shiny.posit.co/
 #
-
+  #setwd(".")
+  source("../utils.R")
+  
 library(shiny)
 library(ggplot2)
 library(tidyverse)
@@ -31,8 +33,7 @@ function(input, output, session) {
     print("Loading API Query")
   })
   
-  #setwd(".")
-  source("../utils.R")
+
   
   globalDF<-reactiveValues()
   
