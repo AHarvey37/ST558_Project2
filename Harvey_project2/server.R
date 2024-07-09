@@ -14,7 +14,7 @@ library(ggwordcloud)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
-  
+  getwd()
   
   output$text <- renderText({
     paste0("The purpose of this app is to explore three unique endpoints of the Naqtional Park API.","\n",
