@@ -76,19 +76,14 @@ dashboardPage(
                 )),
                 actionButton("search",
                              "Search"),
+                br(),
+                br(),
                 DT::dataTableOutput("table")
                 )
               ),
       tabItem("dataExploration",
               fluidRow(
                 textOutput("text3"),
-                # radioButtons("tabChoice",
-                #              "Tables to choose:",
-                #              choices = c("Table 1"="tab1"#,
-                #                          #"Table 2"="tab2",
-                #                          #"Table 3"="tab3",
-                #                          #"Table 4"="tab4"
-                #                          )),
                 radioButtons("plotChoice",
                              "Choose which variables to plot:",
                              choices = c(
@@ -103,32 +98,11 @@ dashboardPage(
                               ),
                 actionButton("build",
                              "Build"),
+                br(),
+                br(),
                 plotOutput("outTable"),
                 DT::dataTableOutput("table2")))
       )
     )
   )
 
-# 
-# # Define UI for application that draws a histogram
-# fluidPage(
-# 
-#     # Application title
-#     titlePanel("Old Faithful Geyser Data"),
-# 
-#     # Sidebar with a slider input for number of bins
-#     sidebarLayout(
-#         sidebarPanel(
-#             sliderInput("bins",
-#                         "Number of bins:",
-#                         min = 1,
-#                         max = 50,
-#                         value = 30)
-#         ),
-# 
-#         # Show a plot of the generated distribution
-#         mainPanel(
-#             plotOutput("distPlot")
-#         )
-#     )
-# )
