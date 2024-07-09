@@ -32,7 +32,7 @@ function(input, output, session) {
   })
   
   #setwd(".")
-  source("utils.R")
+  source("./utils.R")
 
   
   globalDF<-reactiveValues()
