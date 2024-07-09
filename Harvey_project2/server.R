@@ -234,7 +234,7 @@ function(input, output, session) {
                                                                    vjust = 1,
                                                                    hjust = 1))+
                                   # Create Title, and labels for x axis and y axis
-                                  labs(title = paste("States by Desigination density"),
+                                  labs(title = paste("States by Desigination density greater than 5"),
                                        x = "States",
                                        y = "Designations")
                                 # Closes renderPlot
