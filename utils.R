@@ -12,7 +12,7 @@ key<-source("ghost.r")[1]
 #              "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
 #              "MP","PR","VI")
 getAllParks<-function(key=source("ghost.r")[1]){
-total<-as_tibble(NULL)
+  total<-as_tibble(NULL)
   apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?limit=1000",
                       "&api_key=",
                       key,
@@ -20,7 +20,7 @@ total<-as_tibble(NULL)
   raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
   data_Parks<- raw_ParkIDs$data|>
     separate_longer_delim(states, delim = ",")|>
-    select(c(fullName,parkCode,states,designation,description,id,latitude,longitude))
+    select(c(fullName,parkCode,states,description,designation,id,latitude,longitude))
   total<-data_Parks
   return(total)
 }
@@ -98,13 +98,13 @@ my_wrapper<- function (keyword, stateCode = "NC",
   
   x<-getAllParks(key)
   
-  if(all.equal(x,y)){
-    return(x)
-  }
-  else{
+  if(keyword=="articles" || keyword=="events"){
     cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
       filter(states == stateCode)|>
       distinct(title,.keep_all = TRUE)
     return(cleaned)
+  }
+  else{
+    return(x)
   }
 }

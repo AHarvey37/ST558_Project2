@@ -118,14 +118,14 @@ my_wrapper<- function (keyword, stateCode = "NC",
   
   x<-getAllParks(key)
   
-  if(all.equal(x,y)){
-    return(x)
-  }
-  else{
-  cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
+  if(keyword=="articles" || keyword=="events"){
+    cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
     filter(states == stateCode)|>
     distinct(title,.keep_all = TRUE)
   return(cleaned)
+  }
+  else{
+  return(x)
   }
 }
 ```
@@ -153,5 +153,13 @@ test8<-my_wrapper("sad")|>
 
 unique(test8$designation)
 ggplot(test8,aes(x=states,y=designation,size=count))+geom_point()+facet_wrap(vars(states))
+
+test0<-my_wrapper("articles","MD")|>
+  count(fullName,tags,name = "count")
+
+ggplot(test0,aes(label=tags,size = count,color=count))+
+  ggwordcloud::geom_text_wordcloud()+
+  scale_color_gradient(low = 'blue', high = 'red')+
+  scale_size_area(max_size = 10)#+facet_wrap(vars(fullName))
 ```
 

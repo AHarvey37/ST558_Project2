@@ -10,6 +10,7 @@
 library(shiny)
 library(ggplot2)
 library(tidyverse)
+library(ggwordcloud)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
@@ -28,7 +29,7 @@ function(input, output, session) {
   })
   
   output$text2<- renderText({
-    print("Query National Park Service API")
+    print("Loading API Query")
   })
   
   setwd("..")
@@ -41,45 +42,44 @@ function(input, output, session) {
                                   articles=as.character("articles"),
                                   events=as.character("events"),
                                   allParks={globalDF$b<-getAllParks()})
-               
-               if(input$choices=="events"){
-                 globalDF$a<-NULL
-                 for (i in 1:length(input$state)) {
-                   stateCode<-paste(as.character(input$state[i]))
-                   globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
-                   }
-                 #build contingency table for events
-                 globalDF$Events<-globalDF$a|>
-                   mutate(isfree=as.factor(isfree))|>
-                   count(fullName,types,isfree,name = "count")}
-               else if(input$choices=="articles"){
-                 globalDF$a<-NULL
-                 for (i in 1:length(input$state)) {
-                   stateCode<-paste(as.character(input$state[i]))
-                   globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
-                 }
+               globalDF$b<-getAllParks()
+               for (i in 1:length(input$state)) {
+                 stateCode<-paste(as.character(input$state[i]))
+                 globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
+               }
+               #builds contingency table for word cloud
+               globalDF$Cloud<-globalDF$a|>
+                 count(fullName,tags,name = "count")
+               #builds contingency table for state parks
+               globalDF$stateParks<-globalDF$b|>
+                 count(states,designation,name = "count")|>
+                 mutate(designation=na_if(designation,""))|>
+                 filter(count>5)
                #builds contingency table for number of parks
                globalDF$TotParks<-globalDF$a|>
-                 count(fullName,states,name="count")}
-               else if(input$choices=="allParks"){
-                 globalDF$a<-globalDF$b
-                 globalDF$stateParks<-globalDF$b|>
-                   mutate(designation=na_if(designation,""))|>
-                   count(states,designation,name = "count")|>
-                   filter(count>5)
+                 count(fullName,states,name="count")
+               #build contingency table for events
+               if(input$choices=="events"){
+                 globalDF$Events<-globalDF$a|>
+                   mutate(isfree=as.factor(isfree))|>
+                   count(fullName,types,isfree,name = "count")
                }
-               
-               output$table <- 
-                 DT::renderDT(
-                   globalDF$a,
-                   options=list(scrollX=TRUE))
+
+               output$table <- switch(input$choices,
+                                      articles={DT::renderDT(
+                                        globalDF$a,
+                                        options=list(scrollX=TRUE))},
+                                      events={DT::renderDT(
+                                        globalDF$a,
+                                        options=list(scrollX=TRUE))},
+                                      allParks={DT::renderDT(
+                                        globalDF$b,
+                                        options=list(scrollX=TRUE))})
+                 
                   }
                )
   
-  output$text3<-renderText({
-    print("Plots")})
-  
-  
+  output$text3<-renderText({print("Plots")})
   
   observeEvent(input$build,
                {
@@ -151,60 +151,51 @@ function(input, output, session) {
                                      y = paste("Number of", input$choices))
                             })}
                           },dens={
-                              if(input$facet==FALSE){output$outTable<- renderPlot({
-                                ggplot(globalDF$stateParks
-                                       ,aes(x=states,y=designation,size=count))+
-                                  geom_point()
-                              })
-                                
-                              }
+                            if(input$facet==FALSE){output$outTable<- renderPlot({
+                              ggplot(globalDF$stateParks,
+                                     aes(x=states,
+                                         y=designation,
+                                         size=count))+
+                                geom_point()
+                            })
                             }
+                            else{output$outTable<- renderPlot({
+                              ggplot(globalDF$stateParks,
+                                     aes(x=states,
+                                         y=designation,
+                                         size=count))+
+                                geom_point()+
+                                facet_wrap(vars(states))
+                            })
+                            }
+                          },tagDens={
+                            if(input$facet==FALSE){output$outTable<- renderPlot({
+                              ggplot(globalDF$Cloud,
+                                     aes(label=tags,size = count,color=count))+
+                                ggwordcloud::geom_text_wordcloud()+
+                                scale_color_gradient(low = 'blue', high = 'red')+
+                                scale_size_area(max_size = 10)
+                            })
+                            }
+                            else{output$outTable<-renderPlot({
+                              ggplot(globalDF$Cloud,
+                                     aes(label=tags,size = count,color=count))+
+                                ggwordcloud::geom_text_wordcloud()+
+                                scale_color_gradient(low = 'blue', high = 'red')+
+                                scale_size_area(max_size = 10)+
+                                facet_wrap(vars(fullName))
+                            })
+                            }
+                          }
                  )
                  }
                 )
-  # {
-  #                
-  #                }
-  #                else if(input$plotChoice=="eventQuant"&&input$choices=="events"){
-  #                    if(input$facet==FALSE){
-  #                      output$outTable<- renderPlot({
-  #                      ggplot(globalDF$Events,
-  #                                             aes(x=types,y=count))+
-  #                        geom_point(aes(color=isfree))+
-  #                        theme(axis.text.x = element_text(angle=45,
-  #                                                         vjust = 1,
-  #                                                         hjust = 1))+
-  #                        labs(title = paste("Total", input$choices,"by national park"),
-  #                             x = "Dates",
-  #                             y = paste("Number of", input$choices))
-  #                      })
-  #                      }
-  #                    else {
-  #                      output$outTable<- renderPlot({
-  #                        ggplot(globalDF$Events,
-  #                               aes(x=types,
-  #                                   y=count))+
-  #                          geom_point(aes(color=isfree))+
-  #                          facet_wrap(vars(fullName))+
-  #                          theme(axis.text.x = element_text(angle=45,
-  #                                                           vjust = 1,
-  #                                                           hjust = 1))+
-  #                          labs(title = paste("Total", input$choices,"by national park"),
-  #                               x = "Dates",
-  #                               y = paste("Number of", input$choices))
-  #                      })
-  #                    }
-  #                  } 
-  #                else{output$text3<-renderText({
-  #                  print("Must select 'events' in data exploration tab")
-  #                })
-  #                }
-  #                })
-  
+
   observeEvent(input$build,{
-    if(input$facet==TRUE){
-      output$text3<-renderText({print("this works somehow")})
-    }
+    output$text3<-renderText({print("Build Plots")})
+    # if(input$facet==TRUE){
+    #   output$text3<-renderText({print("this works somehow")})
+    # }
   })
   
   observe(output$table2<-switch(input$plotChoice,
@@ -216,20 +207,10 @@ function(input, output, session) {
                                   },
                                 dens={
                                   DT::renderDT(globalDF$stateParks,options=list(scrollX=TRUE))
+                                },
+                                tagDens={
+                                  DT::renderDT(globalDF$Cloud,options=list(scrollX=TRUE))
                                 }
                                 )
           )
-    # output$distPlot <- renderPlot({
-    # 
-    #     # generate bins based on input$bins from ui.R
-    #     x    <- faithful[, 2]
-    #     bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    # 
-    #     # draw the histogram with the specified number of bins
-    #     hist(x, breaks = bins, col = 'darkgray', border = 'white',
-    #          xlab = 'Waiting time to next eruption (in mins)',
-    #          main = 'Histogram of waiting times')
-# 
-#     })
-
 }
