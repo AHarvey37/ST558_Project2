@@ -21,4 +21,4 @@ Project 2 for Data Science for Statisticians
 
 • The shiny::runGitHub() code that we can copy and paste into RStudio to run your app.
   Code to run the app:
-    shiny::runGitHub("AHarvey37/ST558_Project2/Harvey_project2")
+    shiny::runGitHub("AHarvey37/ST558_Project2","rstudio",subdir = "Harvey_project2")
