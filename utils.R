@@ -11,6 +11,7 @@ key<-source("ghost.r")[1]
 #              "NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI",
 #              "SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY","DC","GU",
 #              "MP","PR","VI")
+getAllParks<-function(key=source("ghost.r")[1]){
 total<-as_tibble(NULL)
   apiParks<-GET(paste("https://developer.nps.gov/api/v1/parks?limit=1000",
                       "&api_key=",
@@ -19,8 +20,10 @@ total<-as_tibble(NULL)
   raw_ParkIDs<- fromJSON(rawToChar(apiParks$content))
   data_Parks<- raw_ParkIDs$data|>
     separate_longer_delim(states, delim = ",")|>
-    select(c(fullName,parkCode,description,states,id,latitude,longitude))
+    select(c(fullName,parkCode,states,designation,description,id,latitude,longitude))
   total<-data_Parks
+  return(total)
+}
 
 
 
@@ -76,10 +79,7 @@ getEvents<-function(Url){
 
 #Wrapper function to return cleaned data
 my_wrapper<- function (keyword, stateCode = "NC",
-                       key=as.character(source("ghost.r")[1]),
-                       parkCodes=total,
-                       Articles=totalARTs,
-                       Events = TotalEvents){
+                       key=as.character(source("ghost.r")[1])){
   y<- NULL
   newUrl <- paste("https://developer.nps.gov/api/v1/",
                   keyword,
@@ -92,12 +92,19 @@ my_wrapper<- function (keyword, stateCode = "NC",
          y<-getArticles(newUrl),
          ifelse(keyword=="events",
                 y<-getEvents(newUrl),
-                stop("Error in keyword, Please choose 'alerts','articles',or 'events'")
-                )
+                y<-getAllParks(key)
          )
-  x<-parkCodes
-  cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
-    filter(states == stateCode)|>
-    distinct(title,.keep_all = TRUE)
-  return(cleaned)
+  )
+  
+  x<-getAllParks(key)
+  
+  if(all.equal(x,y)){
+    return(x)
   }
+  else{
+    cleaned<-right_join(x, y , by = "parkCode",keep = FALSE, relationship = "many-to-many")|>
+      filter(states == stateCode)|>
+      distinct(title,.keep_all = TRUE)
+    return(cleaned)
+  }
+}

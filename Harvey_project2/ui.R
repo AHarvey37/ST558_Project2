@@ -46,7 +46,8 @@ dashboardPage(
                 radioButtons("choices",
                              label = "API Keyword:",
                              choices = c("Articles"="articles",
-                                         "Events"="events")
+                                         "Events"="events",
+                                         "All Parks"="allParks")
                              ),
                 tags$div(class="multicol",
                 checkboxGroupInput("state",

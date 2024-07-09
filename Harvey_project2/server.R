@@ -39,23 +39,34 @@ function(input, output, session) {
   observeEvent(input$search,
                {keyword <- switch(input$choices,
                                   articles=as.character("articles"),
-                                  events=as.character("events"))
-               globalDF$a<-NULL
-               for (i in 1:length(input$state)) {
-                 stateCode<-paste(as.character(input$state[i]))
-                 globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
-               }
+                                  events=as.character("events"),
+                                  allParks={globalDF$b<-getAllParks()})
+               
                if(input$choices=="events"){
+                 globalDF$a<-NULL
+                 for (i in 1:length(input$state)) {
+                   stateCode<-paste(as.character(input$state[i]))
+                   globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
+                   }
                  #build contingency table for events
                  globalDF$Events<-globalDF$a|>
                    mutate(isfree=as.factor(isfree))|>
                    count(fullName,types,isfree,name = "count")}
-               else{
+               else if(input$choices=="articles"){
+                 globalDF$a<-NULL
+                 for (i in 1:length(input$state)) {
+                   stateCode<-paste(as.character(input$state[i]))
+                   globalDF$a<-bind_rows(globalDF$a,my_wrapper(keyword,stateCode))
+                 }
                #builds contingency table for number of parks
                globalDF$TotParks<-globalDF$a|>
                  count(fullName,states,name="count")}
-               
-               
+               else if(input$choices=="allParks"){
+                 globalDF$a<-globalDF$b
+                 globalDF$stateParks<-globalDF$b|>
+                   count(designation,name = "count")|>
+                   mutate(designation=na_if(designation,""))
+               }
                
                output$table <- 
                  DT::renderDT(
@@ -138,7 +149,11 @@ function(input, output, session) {
                                      x = "Dates",
                                      y = paste("Number of", input$choices))
                             })}
-                   }
+                          },allParks={
+                              if(input$facet==FALSE){
+                                
+                              }
+                            }
                  )
                  }
                 )
